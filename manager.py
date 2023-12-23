@@ -24,7 +24,6 @@ class Connect:
 			aggregation_str = f"{aggr}" if aggr else columns_str
 			cond = f"WHERE {'and '.join(cond)}" if cond else ""
 			query = f"SELECT {aggregation_str} FROM {self.table} {cond}"
-			print(query)
 			if fetchall:
 				return cur.execute(query).fetchall()
 
@@ -83,9 +82,29 @@ class Connect:
 	        # Добавление опции конфликта, если указана
 	        if on_conflict:
 	            query += f" ON CONFLICT {on_conflict}"
-	        print(query)
-
 
 	        # Выполнение запроса и возврат количества обновленных строк
 	        return cur.execute(query, list(values.values())).rowcount
+	        
 
+	def delete(self, cond, on_conflict=None):
+	    """
+	    Выполняет DELETE-запрос к базе данных SQLite.
+
+	    :param cond: Список условий для оператора WHERE.
+	    :param on_conflict: Опция конфликта (например, 'IGNORE', 'REPLACE' и т. д.) или None (по умолчанию).
+	    :return: Количество удаленных строк.
+	    """
+	    with self.db_instance as con:
+	        cur = con.cursor()
+
+	        # Формирование SQL-запроса
+	        cond_str = ' AND '.join(cond) if cond else ''
+	        query = f"DELETE FROM {self.table} WHERE {cond_str}"
+
+	        # Добавление опции конфликта, если указана
+	        if on_conflict:
+	            query += f" ON CONFLICT {on_conflict}"
+
+	        # Выполнение запроса и возврат количества удаленных строк
+	        return cur.execute(query).rowcount
