@@ -1,6 +1,5 @@
 
 import sqlite3
-# from .errors import ColumnNotFoundError
 
 class Connect:
 	def __init__(self, path, table):
@@ -30,36 +29,43 @@ class Connect:
 			return cur.execute(query).fetchone()
 
 
-	def insert(self, values, on_conflict=None, return_id=False):
-		"""
-		Выполняет INSERT-запрос к базе данных SQLite.
+	def insert(self, values = None, on_conflict=None, return_id=False):
+	    """
+	    Выполняет INSERT-запрос к базе данных SQLite.
 
-		:param table: Имя таблицы, в которую выполняется вставка.
-		:param values: Словарь значений, где ключи - столбцы, а значения - значения для вставки.
-		:param on_conflict: Опция конфликта (например, 'IGNORE', 'REPLACE' и т. д.) или None (по умолчанию).
-		:param return_id: Если True, возвращает идентификатор вставленной строки (по умолчанию False).
-		:return: Возвращает идентификатор вставленной строки, если return_id=True, иначе возвращает None.
-		"""
-		with self.db_instance as con:
-			cur = con.cursor()
+	    :param values: Словарь значений, где ключи - столбцы, а значения - значения для вставки.
+	    :param on_conflict: Опция конфликта (например, 'IGNORE', 'REPLACE' и т. д.) или None (по умолчанию).
+	    :param return_id: Если True, возвращает идентификатор вставленной строки (по умолчанию False).
+	    :return: Возвращает идентификатор вставленной строки, если return_id=True, иначе возвращает None.
+	    """
+	    with self.db_instance as con:
+	        cur = con.cursor()
 
-			# Формирование SQL-запроса
-			columns_str = ', '.join(values.keys())
-			values_str = ', '.join(['?' for _ in range(len(values))])
-			query = f"INSERT INTO {self.table} ({columns_str}) VALUES ({values_str})"
+	        # Проверка наличия значений в словаре
+	        if not values:
+	            query = f"INSERT INTO {self.table} DEFAULT VALUES"
+	        else:
+	            # Формирование SQL-запроса
+	            columns_str = ', '.join(values.keys())
+	            values_str = ', '.join(['?' for _ in range(len(values))])
+	            query = f"INSERT INTO {self.table} ({columns_str}) VALUES ({values_str})"
 
-			# Добавление опции конфликта, если указана
-			if on_conflict:
-				query += f" ON CONFLICT {on_conflict}"
+	        # Добавление опции конфликта, если указана
+	        if on_conflict:
+	            query += f" ON CONFLICT {on_conflict}"
 
-			# Выполнение запроса
-			cur.execute(query, list(values.values()))
+	        # Выполнение запроса
+	        if values:
+	            cur.execute(query, list(values.values()))
+	        else:
+	            cur.execute(query)
 
-			# Если указан return_id, возвращаем идентификатор вставленной строки
-			if return_id:
-				return cur.lastrowid
-			else:
-				return None
+	        # Если указан return_id, возвращаем идентификатор вставленной строки
+	        if return_id:
+	            return cur.lastrowid
+	        else:
+	            return None
+
 
 	def update(self, values, cond, on_conflict=None):
 	    """
@@ -85,7 +91,7 @@ class Connect:
 
 	        # Выполнение запроса и возврат количества обновленных строк
 	        return cur.execute(query, list(values.values())).rowcount
-	        
+
 
 	def delete(self, cond, on_conflict=None):
 	    """
