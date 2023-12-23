@@ -29,7 +29,7 @@ class Connect:
 			return cur.execute(query).fetchone()
 
 
-	def insert(self, values = None, on_conflict=None, return_id=False):
+	def insert(self, values = None, on_conflict=None, return_id=True):
 	    """
 	    Выполняет INSERT-запрос к базе данных SQLite.
 
