@@ -1,83 +1,93 @@
+
 import sqlite3
 
-
 class Connect:
-    def __init__(self, path):
-        self.db_instance = sqlite3.connect(path)
+	def __init__(self, path):
+		self.db_instance = sqlite3.connect(path)
 
-    def select(self, table, cols=None, cond=None, aggr=None, fetchall=False):
-        """
-        Выполняет SELECT-запрос к базе данных SQLite.
+	def select(self, table, cols: list = [], cond = [], aggr = None, fetchall = False):
+		"""
+		Выполняет SELECT-запрос к базе данных SQLite.
 
-        :param table: Имя таблицы, к которой выполняется запрос.
-        :param cols: Список столбцов для выборки (по умолчанию все столбцы).
-        :param cond: Список условий для оператора WHERE.
-        :param aggr: Агрегирующая функция (например, 'COUNT', 'SUM' и т. д.) или None для выборки столбцов.
-        :param fetchall: Если True, возвращает все строки, иначе возвращает первую строку (по умолчанию False).
-        :return: Результат запроса (все строки или первая строка, в зависимости от fetchall).
-        """
-        with self.db_instance as con:
-            cur = con.cursor()
-            columns_str = ', '.join(cols) if cols else '*'
-            aggregation_str = f"{aggr}" if aggr else columns_str
-            cond = f"WHERE {' and '.join(cond)}" if cond else ""
-            query = f"SELECT {aggregation_str} FROM {table} {cond}"
-            if fetchall:
-                return cur.execute(query).fetchall()
-            return cur.execute(query).fetchone()
+		:param table: Имя таблицы, к которой выполняется запрос.
+		:param cols: Список столбцов для выборки (по умолчанию все столбцы).
+		:param cond: Список условий для оператора WHERE.
+		:param aggr: Агрегирующая функция (например, 'COUNT', 'SUM' и т. д.) или None для выборки столбцов.
+		:param fetchall: Если True, возвращает все строки, иначе возвращает первую строку (по умолчанию False).
+		:return: Результат запроса (все строки или первая строка, в зависимости от fetchall).
+		"""
+		with self.db_instance as con:
+			cur = con.cursor()
+			columns_str = ', '.join(cols) if cols else '*'
+			aggregation_str = f"{aggr}" if aggr else columns_str
+			cond = f"WHERE {'and '.join(cond)}" if cond else ""
+			query = f"SELECT {aggregation_str} FROM {table} {cond}"
+			print(query)
+			if fetchall:
+				return cur.execute(query).fetchall()
 
-    def insert(self, table, values, on_conflict=None, return_id=False):
-        """
-        Выполняет INSERT-запрос к базе данных SQLite.
+			return cur.execute(query).fetchone()
 
-        :param table: Имя таблицы, в которую выполняется вставка.
-        :param values: Словарь значений, где ключи - столбцы, а значения - значения для вставки.
-        :param on_conflict: Опция конфликта (например, 'IGNORE', 'REPLACE' и т. д.) или None (по умолчанию).
-        :param return_id: Если True, возвращает идентификатор вставленной строки (по умолчанию False).
-        :return: Возвращает идентификатор вставленной строки, если return_id=True, иначе возвращает None.
-        """
-        with self.db_instance as con:
-            cur = con.cursor()
 
-            # Формирование SQL-запроса
-            columns_str = ', '.join(values.keys())
-            values_str = ', '.join(['?' for _ in range(len(values))])
-            query = f"INSERT INTO {table} ({columns_str}) VALUES ({values_str})"
+	def insert(self, table, values, on_conflict=None, return_id=False):
+		"""
+		Выполняет INSERT-запрос к базе данных SQLite.
 
-            # Добавление опции конфликта, если указана
-            if on_conflict:
-                query += f" ON CONFLICT {on_conflict}"
+		:param table: Имя таблицы, в которую выполняется вставка.
+		:param values: Словарь значений, где ключи - столбцы, а значения - значения для вставки.
+		:param on_conflict: Опция конфликта (например, 'IGNORE', 'REPLACE' и т. д.) или None (по умолчанию).
+		:param return_id: Если True, возвращает идентификатор вставленной строки (по умолчанию False).
+		:return: Возвращает идентификатор вставленной строки, если return_id=True, иначе возвращает None.
+		"""
+		with self.db_instance as con:
+			cur = con.cursor()
 
-            # Выполнение запроса
-            cur.execute(query, list(values.values()))
+			# Формирование SQL-запроса
+			columns_str = ', '.join(values.keys())
+			values_str = ', '.join(['?' for _ in range(len(values))])
+			query = f"INSERT INTO {table} ({columns_str}) VALUES ({values_str})"
 
-            # Если указан return_id, возвращаем идентификатор вставленной строки
-            if return_id:
-                return cur.lastrowid
-            else:
-                return None
+			# Добавление опции конфликта, если указана
+			if on_conflict:
+				query += f" ON CONFLICT {on_conflict}"
 
-    def update(self, table, values, cond, on_conflict=None):
-        """
-        Выполняет UPDATE-запрос к базе данных SQLite.
+			# Выполнение запроса
+			cur.execute(query, list(values.values()))
 
-        :param table: Имя таблицы, в которой выполняется обновление.
-        :param values: Словарь значений для обновления, где ключи - столбцы, а значения - новые значения.
-        :param cond: Список условий для оператора WHERE.
-        :param on_conflict: Опция конфликта (например, 'IGNORE', 'REPLACE' и т. д.) или None (по умолчанию).
-        :return: Количество обновленных строк.
-        """
-        with self.db_instance as con:
-            cur = con.cursor()
+			# Если указан return_id, возвращаем идентификатор вставленной строки
+			if return_id:
+				return cur.lastrowid
+			else:
+				return None
 
-            # Формирование SQL-запроса
-            set_clause = ', '.join([f"{col} = ?" for col in values.keys()])
-            cond_str = ' AND '.join(cond) if cond else ''
-            query = f"UPDATE {table} SET {set_clause} WHERE {cond_str}"
+	def update(self, table, values, cond, on_conflict=None):
+	    """
+	    Выполняет UPDATE-запрос к базе данных SQLite.
 
-            # Добавление опции конфликта, если указана
-            if on_conflict:
-                query += f" ON CONFLICT {on_conflict}"
+	    :param table: Имя таблицы, в которой выполняется обновление.
+	    :param values: Словарь значений для обновления, где ключи - столбцы, а значения - новые значения.
+	    :param cond: Список условий для оператора WHERE.
+	    :param on_conflict: Опция конфликта (например, 'IGNORE', 'REPLACE' и т. д.) или None (по умолчанию).
+	    :return: Количество обновленных строк.
+	    """
+	    with self.db_instance as con:
+	        cur = con.cursor()
 
-            # Выполнение запроса и возврат количества обновленных строк
-            return cur.execute(query, list(values.values() + cond)).rowcount
+	        # Формирование SQL-запроса
+	        set_clause = ', '.join([f"{col} = ?" for col in values.keys()])
+	        cond_str = ' AND '.join(cond) if cond else ''
+	        query = f"UPDATE {table} SET {set_clause} WHERE {cond_str}"
+
+	        # Добавление опции конфликта, если указана
+	        if on_conflict:
+	            query += f" ON CONFLICT {on_conflict}"
+	        print(query)
+
+
+	        # Выполнение запроса и возврат количества обновленных строк
+	        return cur.execute(query, list(values.values())).rowcount
+
+
+
+
+
