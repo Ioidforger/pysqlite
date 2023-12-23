@@ -1,11 +1,13 @@
 
 import sqlite3
+# from .errors import ColumnNotFoundError
 
 class Connect:
-	def __init__(self, path):
+	def __init__(self, path, table):
+		self.table = table
 		self.db_instance = sqlite3.connect(path)
 
-	def select(self, table, cols: list = [], cond = [], aggr = None, fetchall = False):
+	def select(self, cols: list = [], cond = [], aggr = None, fetchall = False):
 		"""
 		Выполняет SELECT-запрос к базе данных SQLite.
 
@@ -21,7 +23,7 @@ class Connect:
 			columns_str = ', '.join(cols) if cols else '*'
 			aggregation_str = f"{aggr}" if aggr else columns_str
 			cond = f"WHERE {'and '.join(cond)}" if cond else ""
-			query = f"SELECT {aggregation_str} FROM {table} {cond}"
+			query = f"SELECT {aggregation_str} FROM {self.table} {cond}"
 			print(query)
 			if fetchall:
 				return cur.execute(query).fetchall()
@@ -29,7 +31,7 @@ class Connect:
 			return cur.execute(query).fetchone()
 
 
-	def insert(self, table, values, on_conflict=None, return_id=False):
+	def insert(self, values, on_conflict=None, return_id=False):
 		"""
 		Выполняет INSERT-запрос к базе данных SQLite.
 
@@ -45,7 +47,7 @@ class Connect:
 			# Формирование SQL-запроса
 			columns_str = ', '.join(values.keys())
 			values_str = ', '.join(['?' for _ in range(len(values))])
-			query = f"INSERT INTO {table} ({columns_str}) VALUES ({values_str})"
+			query = f"INSERT INTO {self.table} ({columns_str}) VALUES ({values_str})"
 
 			# Добавление опции конфликта, если указана
 			if on_conflict:
@@ -60,7 +62,7 @@ class Connect:
 			else:
 				return None
 
-	def update(self, table, values, cond, on_conflict=None):
+	def update(self, values, cond, on_conflict=None):
 	    """
 	    Выполняет UPDATE-запрос к базе данных SQLite.
 
@@ -76,7 +78,7 @@ class Connect:
 	        # Формирование SQL-запроса
 	        set_clause = ', '.join([f"{col} = ?" for col in values.keys()])
 	        cond_str = ' AND '.join(cond) if cond else ''
-	        query = f"UPDATE {table} SET {set_clause} WHERE {cond_str}"
+	        query = f"UPDATE {self.table} SET {set_clause} WHERE {cond_str}"
 
 	        # Добавление опции конфликта, если указана
 	        if on_conflict:
@@ -86,8 +88,4 @@ class Connect:
 
 	        # Выполнение запроса и возврат количества обновленных строк
 	        return cur.execute(query, list(values.values())).rowcount
-
-
-
-
 
