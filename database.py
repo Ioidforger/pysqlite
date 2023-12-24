@@ -108,7 +108,7 @@ class Connect:
 	    """
 	    Выполняет DELETE-запрос к базе данных SQLite.
 
-	    :param cond: Список условий для оператора WHERE.
+	    :param cond: Строка или список условий для оператора WHERE.
 	    :param on_conflict: Опция конфликта (например, 'IGNORE', 'REPLACE' и т. д.) или None (по умолчанию).
 	    :return: Количество удаленных строк.
 	    """
@@ -116,7 +116,7 @@ class Connect:
 	        cur = con.cursor()
 
 	        # Формирование SQL-запроса
-	        cond_str = ' AND '.join(cond) if cond else ''
+	        cond_str = ' AND '.join(cond) if isinstance(cond, list) else cond
 	        query = f"DELETE FROM {self.table} WHERE {cond_str}"
 
 	        # Добавление опции конфликта, если указана
