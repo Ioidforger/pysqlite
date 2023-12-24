@@ -1,2 +1,2 @@
-from .manager import Connect
+from .database import Connect
 
