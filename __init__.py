@@ -1,3 +1,3 @@
-from .database import Connect
-from .async_database import AsyncConnect
+from .sync import Connect
+from .async import AsyncConnect
 
