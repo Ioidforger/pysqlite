@@ -3,11 +3,8 @@ import aiosqlite
 class AsyncConnect:
     def __init__(self, path, table):
         self.table = table
-        self.db_instance = None
         self.path = path
-
-    async def connect(self):
-        self.db_instance = await aiosqlite.connect(self.path)
+        self.db_instance = aiosqlite.connect(self.path)
 
     async def close(self):
         if self.db_instance:
@@ -30,9 +27,9 @@ class AsyncConnect:
             query = f"SELECT {aggregation_str} FROM {self.table} {cond}"
 
             if fetchall:
-                return await cur.execute(query).fetchall()
+                return await (await cur.execute(query)).fetchall()
 
-            return await cur.execute(query).fetchone()
+            return await (await cur.execute(query)).fetchone()
 
     async def insert(self, values=None, on_conflict=None, return_id=True):
         async with self.db_instance:
@@ -53,6 +50,8 @@ class AsyncConnect:
             else:
                 await cur.execute(query)
 
+            await self.db_instance.commit()
+
             if return_id:
                 return cur.lastrowid
             else:
@@ -69,7 +68,9 @@ class AsyncConnect:
             if on_conflict:
                 query += f" ON CONFLICT {on_conflict}"
 
-            return (await cur.execute(query, list(values.values()))).rowcount
+            await cur.execute(query, list(values.values()))
+            await self.db_instance.commit()
+            return cur.rowcount
 
     async def delete(self, cond, on_conflict=None):
         async with self.db_instance:
@@ -80,4 +81,6 @@ class AsyncConnect:
             if on_conflict:
                 query += f" ON CONFLICT {on_conflict}"
 
-            return (await cur.execute(query)).rowcount
+            await cur.execute(query)
+            await self.db_instance.commit()
+            return ().rowcount
