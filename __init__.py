@@ -1,3 +1,3 @@
-from .sync import Connect
-from .async import AsyncConnect
+from .synchrone import Connect
+from .asynchrone import AsyncConnect
 
