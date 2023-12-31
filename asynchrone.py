@@ -9,6 +9,9 @@ class AsyncConnect:
     async def connect(self):
         self.db_instance = await aiosqlite.connect(self.path)
 
+    async def commit(self):
+        await self.db_instance.commit()
+
     async def select(self, cols: list = [], cond=None, aggr=None, fetchall=False):
         if self.db_instance is None:
             await self.connect()
@@ -36,8 +39,11 @@ class AsyncConnect:
 
         async with self.db_instance.execute(query, list(values.values())) as cur:
             if return_id:
-                return cur.lastrowid
+                lastrowid = cur.lastrowid
+                await self.commit()
+                return lastrowid
             else:
+                await self.commit()
                 return None
 
     async def update(self, values, cond=None, on_conflict=None):
@@ -52,7 +58,9 @@ class AsyncConnect:
             query += f" ON CONFLICT {on_conflict}"
 
         async with self.db_instance.execute(query, list(values.values())) as cur:
-            return cur.rowcount
+            updated_rows = cur.rowcount
+            await self.commit()
+            return updated_rows
 
     async def delete(self, cond, on_conflict=None):
         if self.db_instance is None:
@@ -65,4 +73,6 @@ class AsyncConnect:
             query += f" ON CONFLICT {on_conflict}"
 
         async with self.db_instance.execute(query) as cur:
-            return cur.rowcount
+            deleted_rows = cur.rowcount
+            await self.commit()
+            return deleted_rows
